@@ -1,0 +1,8 @@
+{
+  "name": "da-agent",
+  "version": "0.1.0",
+  "description": "Data Analysis Agent with Layered Intelligent Routing",
+  "type": "claude-plugin",
+  "author": "DA-Agent Team",
+  "license": "MIT"
+}
