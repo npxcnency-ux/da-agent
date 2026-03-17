@@ -11,14 +11,9 @@ cd ~/da-agent
 pip install -e .
 ```
 
-### 2. Install as Claude Code Plugin
+**Note:** Claude Code automatically loads plugins from directories with a `.claude-plugin/` folder when you navigate to them. Just `cd` into the da-agent directory in Claude Code to use the plugin.
 
-```bash
-# In Claude Code
-/plugin install da-agent@local:~/da-agent
-```
-
-### 3. Set Up Anthropic API Key
+### 2. Set Up Anthropic API Key
 
 ```bash
 export ANTHROPIC_API_KEY="your-key-here"

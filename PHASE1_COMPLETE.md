@@ -167,12 +167,15 @@ pip install -e .
 # Set API key
 export ANTHROPIC_API_KEY="your-key-here"
 
-# Install as Claude Code plugin
-/plugin install da-agent@local:/Users/niupian/da-agent
+# Use the plugin
+# In Claude Code, navigate to the da-agent directory
+cd /Users/niupian/da-agent
 
-# Start using
+# The plugin loads automatically - just use the commands!
 /da:analyze
 ```
+
+**Note:** Claude Code automatically loads plugins from directories containing `.claude-plugin/` when you navigate to them. No manual installation needed for local development.
 
 ## Files Changed
 
