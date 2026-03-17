@@ -21,6 +21,9 @@ dev = [
     "pytest-cov>=4.1.0",
 ]
 
+[tool.setuptools]
+packages = ["lib"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
