@@ -38,15 +38,18 @@ pip install -e .
 - SQLite knowledge base
 - LLM + rule-based complexity scorer
 - analyze-request skill
+- execute-auto skill (simple aggregations)
 - /da:analyze command
+- End-to-end execution for simple queries ✨
 - Comprehensive test coverage
 
+**Deliverable:** Can handle "show me top 10 users by revenue" end-to-end ✅
+
 ⏳ **Next (Phase 2):**
-- Auto execution mode
-- Collaborative mode
-- Advisory mode
-- Code template library
-- Report generation
+- Collaborative mode with checkpoints
+- Advisory mode with guidance
+- Extended code template library
+- Rich report generation with charts
 
 ## License
 

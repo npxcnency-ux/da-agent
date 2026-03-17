@@ -32,6 +32,48 @@ echo 'export ANTHROPIC_API_KEY="your-key-here"' >> ~/.zshrc
 
 ## Your First Analysis
 
+### Complete Example: End-to-End
+
+```bash
+# 1. Prepare sample data
+cat > ~/my_project/users.csv << EOF
+user_id,name,revenue
+1,Alice,250
+2,Bob,180
+3,Charlie,320
+4,Diana,150
+5,Eve,420
+EOF
+
+# 2. Start analysis
+cd ~/my_project
+/da:analyze
+
+# Agent: What business question?
+You: Show me top 5 users by revenue
+
+# Agent: Where is your data?
+You: users.csv
+
+# Agent: [Scores as complexity 2, auto mode]
+# Agent: [Generates code, shows it to you]
+# Agent: Execute? (y/n)
+You: y
+
+# Agent: [Executes code]
+# Output:
+#   user_id    name  revenue
+#         5     Eve      420
+#         3 Charlie      320
+#         1   Alice      250
+#         2     Bob      180
+#         4   Diana      150
+#
+# ✓ Results saved to outputs/result.csv
+```
+
+**You just completed a full analysis in under 1 minute!** 🎉
+
 ### Example: Simple Aggregation
 
 ```bash
@@ -73,12 +115,14 @@ cd ~/my_project
 - File path security validation
 - Complexity scoring (LLM + rule-based fallback)
 - Knowledge base storage
+- Auto execution for simple aggregations
+- End-to-end execution: query to results
 
 ⏳ Coming in Phase 2:
-- Auto execution mode
-- Collaborative mode
-- Advisory mode
-- Report generation
+- Collaborative mode with checkpoints
+- Advisory mode with guidance
+- Extended code template library
+- Rich report generation with charts
 
 ## Security Notes
 
