@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List, Optional
 
 
-class SecurityViolation(Exception):
+class SecurityError(Exception):
     """Raised when a security policy is violated."""
     pass
 
@@ -29,10 +29,13 @@ class SecureFileAccess:
         ".env.local",
         ".env.development",
         ".env.production",
-        ".env.test",
-        "credentials.json",
-        ".git-credentials",
+        "credentials",  # Credentials files (generic)
+        "secrets",  # Secrets files (generic)
         ".ssh/",  # SSH directory
+        ".aws/",  # AWS directory
+        "id_rsa",  # SSH key file
+        "id_dsa",  # SSH key file
+        ".pem",  # Certificate files
     ]
 
     def __init__(self, workspace: str):
@@ -59,7 +62,7 @@ class SecureFileAccess:
             Resolved absolute Path object
 
         Raises:
-            SecurityViolation: If path is outside workspace or matches forbidden patterns
+            SecurityError: If path is outside workspace or matches forbidden patterns
         """
         # Convert to Path and resolve (handles symlinks, .., etc.)
         if Path(path).is_absolute():
@@ -71,7 +74,7 @@ class SecureFileAccess:
         try:
             resolved_path.relative_to(self.workspace)
         except ValueError:
-            raise SecurityViolation(
+            raise SecurityError(
                 f"Access denied: Path '{path}' is outside workspace '{self.workspace}'"
             )
 
@@ -82,19 +85,41 @@ class SecureFileAccess:
         for pattern in self.FORBIDDEN_PATTERNS:
             # Check if any part of the path matches forbidden patterns
             if pattern.endswith("/"):
-                # Directory pattern (e.g., .ssh/)
+                # Directory pattern (e.g., .ssh/, .aws/)
                 if pattern.rstrip("/") in path_parts:
-                    raise SecurityViolation(
+                    raise SecurityError(
                         f"Access denied: Path contains forbidden pattern '{pattern}'"
                     )
+            elif pattern == ".pem":
+                # File extension pattern specifically for .pem
+                if resolved_path.suffix == pattern:
+                    raise SecurityError(
+                        f"Access denied: Path matches forbidden pattern '{pattern}'"
+                    )
             else:
-                # File pattern (e.g., .env)
+                # File/prefix pattern (e.g., .env, credentials, id_rsa)
+                # Match exact name or name starting with pattern
                 if resolved_path.name == pattern or resolved_path.name.startswith(pattern):
-                    raise SecurityViolation(
+                    raise SecurityError(
                         f"Access denied: Path matches forbidden pattern '{pattern}'"
                     )
 
         return resolved_path
+
+    def validate_path(self, file_path: str) -> Path:
+        """
+        Public method to validate that a path is safe to access.
+
+        Args:
+            file_path: Path to validate (can be relative or absolute)
+
+        Returns:
+            Resolved absolute Path object
+
+        Raises:
+            SecurityError: If path is outside workspace or matches forbidden patterns
+        """
+        return self._validate_path(file_path)
 
     def read_file(self, path: str, encoding: str = "utf-8") -> str:
         """
@@ -108,7 +133,7 @@ class SecureFileAccess:
             File contents as string
 
         Raises:
-            SecurityViolation: If path violates security policies
+            SecurityError: If path violates security policies
             FileNotFoundError: If file doesn't exist
         """
         validated_path = self._validate_path(path)
@@ -128,7 +153,7 @@ class SecureFileAccess:
             encoding: File encoding (default: utf-8)
 
         Raises:
-            SecurityViolation: If path violates security policies
+            SecurityError: If path violates security policies
         """
         validated_path = self._validate_path(path)
 
@@ -145,7 +170,7 @@ class SecureFileAccess:
             path: Path to the file (relative to workspace or absolute within workspace)
 
         Raises:
-            SecurityViolation: If path violates security policies
+            SecurityError: If path violates security policies
             FileNotFoundError: If file doesn't exist
         """
         validated_path = self._validate_path(path)
@@ -155,7 +180,7 @@ class SecureFileAccess:
 
         validated_path.unlink()
 
-    def list_files(self, path: str = ".", include_hidden: bool = False) -> List[str]:
+    def list_workspace_files(self, path: str = ".", include_hidden: bool = False) -> List[str]:
         """
         List files in a directory within the workspace.
 
@@ -167,7 +192,7 @@ class SecureFileAccess:
             List of filenames (not full paths)
 
         Raises:
-            SecurityViolation: If path violates security policies
+            SecurityError: If path violates security policies
         """
         validated_path = self._validate_path(path)
 
@@ -198,7 +223,7 @@ class SecureFileAccess:
             True if file exists, False otherwise
 
         Raises:
-            SecurityViolation: If path violates security policies
+            SecurityError: If path violates security policies
         """
         validated_path = self._validate_path(path)
         return validated_path.exists()

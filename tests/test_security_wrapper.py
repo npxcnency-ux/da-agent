@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from lib.security_wrapper import SecureFileAccess, SecurityViolation
+from lib.security_wrapper import SecureFileAccess, SecurityError
 
 
 class TestSecureFileAccessInitialization:
@@ -51,6 +51,19 @@ class TestSecureFileAccessInitialization:
 class TestPathValidation:
     """Test path validation and security checks."""
 
+    def test_public_validate_path(self, tmp_path):
+        """Should provide public validate_path method."""
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        test_file = workspace / "test.txt"
+        test_file.write_text("content")
+
+        sfa = SecureFileAccess(str(workspace))
+        validated_path = sfa.validate_path("test.txt")
+
+        assert validated_path == test_file.resolve()
+        assert isinstance(validated_path, Path)
+
     def test_validate_allows_file_in_workspace(self, tmp_path):
         """Should allow access to files within workspace."""
         workspace = tmp_path / "workspace"
@@ -85,7 +98,7 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path(str(outside_file))
 
         assert "outside workspace" in str(exc_info.value).lower()
@@ -97,7 +110,7 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path("../../../etc/passwd")
 
         assert "outside workspace" in str(exc_info.value).lower()
@@ -115,7 +128,7 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path("escape.txt")
 
         assert "outside workspace" in str(exc_info.value).lower()
@@ -129,7 +142,7 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path(".env")
 
         assert "forbidden" in str(exc_info.value).lower()
@@ -145,7 +158,7 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path("config/.env.local")
 
         assert "forbidden" in str(exc_info.value).lower()
@@ -159,13 +172,13 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path(".ssh/id_rsa")
 
         assert "forbidden" in str(exc_info.value).lower()
 
-    def test_validate_blocks_credentials_json(self, tmp_path):
-        """Should block access to credentials.json."""
+    def test_validate_blocks_credentials(self, tmp_path):
+        """Should block access to credentials files."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         creds = workspace / "credentials.json"
@@ -173,27 +186,69 @@ class TestPathValidation:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
+        with pytest.raises(SecurityError) as exc_info:
             sfa._validate_path("credentials.json")
 
         assert "forbidden" in str(exc_info.value).lower()
 
-    def test_validate_blocks_git_credentials(self, tmp_path):
-        """Should block access to .git-credentials."""
+    def test_validate_blocks_secrets(self, tmp_path):
+        """Should block access to secrets files."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
-        git_creds = workspace / ".git-credentials"
-        git_creds.write_text("https://user:pass@github.com")
+        secrets = workspace / "secrets.yaml"
+        secrets.write_text("api_key: secret")
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation) as exc_info:
-            sfa._validate_path(".git-credentials")
+        with pytest.raises(SecurityError) as exc_info:
+            sfa._validate_path("secrets.yaml")
+
+        assert "forbidden" in str(exc_info.value).lower()
+
+    def test_validate_blocks_aws_directory(self, tmp_path):
+        """Should block access to .aws directory."""
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        aws_dir = workspace / ".aws"
+        aws_dir.mkdir()
+
+        sfa = SecureFileAccess(str(workspace))
+
+        with pytest.raises(SecurityError) as exc_info:
+            sfa._validate_path(".aws/credentials")
+
+        assert "forbidden" in str(exc_info.value).lower()
+
+    def test_validate_blocks_ssh_keys(self, tmp_path):
+        """Should block access to SSH key files."""
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        ssh_key = workspace / "id_rsa"
+        ssh_key.write_text("-----BEGIN RSA PRIVATE KEY-----")
+
+        sfa = SecureFileAccess(str(workspace))
+
+        with pytest.raises(SecurityError) as exc_info:
+            sfa._validate_path("id_rsa")
+
+        assert "forbidden" in str(exc_info.value).lower()
+
+    def test_validate_blocks_pem_files(self, tmp_path):
+        """Should block access to .pem certificate files."""
+        workspace = tmp_path / "workspace"
+        workspace.mkdir()
+        pem_file = workspace / "certificate.pem"
+        pem_file.write_text("-----BEGIN CERTIFICATE-----")
+
+        sfa = SecureFileAccess(str(workspace))
+
+        with pytest.raises(SecurityError) as exc_info:
+            sfa._validate_path("certificate.pem")
 
         assert "forbidden" in str(exc_info.value).lower()
 
     def test_validate_allows_git_directory(self, tmp_path):
-        """Should allow access to .git directory (but not credentials)."""
+        """Should allow access to .git directory."""
         workspace = tmp_path / "workspace"
         workspace.mkdir()
         git_dir = workspace / ".git"
@@ -243,7 +298,7 @@ class TestReadFile:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation):
+        with pytest.raises(SecurityError):
             sfa.read_file(".env")
 
     def test_read_file_nonexistent(self, tmp_path):
@@ -299,7 +354,7 @@ class TestWriteFile:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation):
+        with pytest.raises(SecurityError):
             sfa.write_file(".env", "SECRET=123")
 
 
@@ -337,12 +392,12 @@ class TestDeleteFile:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation):
+        with pytest.raises(SecurityError):
             sfa.delete_file(".env")
 
 
-class TestListFiles:
-    """Test list_files operation."""
+class TestListWorkspaceFiles:
+    """Test list_workspace_files operation."""
 
     def test_list_files_in_directory(self, tmp_path):
         """Should list all files in a directory."""
@@ -353,7 +408,7 @@ class TestListFiles:
         (workspace / "file3.py").write_text("3")
 
         sfa = SecureFileAccess(str(workspace))
-        files = sfa.list_files(".")
+        files = sfa.list_workspace_files(".")
 
         assert len(files) == 3
         assert "file1.txt" in files
@@ -370,7 +425,7 @@ class TestListFiles:
         (subdir / "file2.txt").write_text("2")
 
         sfa = SecureFileAccess(str(workspace))
-        files = sfa.list_files("subdir")
+        files = sfa.list_workspace_files("subdir")
 
         assert len(files) == 2
         assert "file1.txt" in files
@@ -384,7 +439,7 @@ class TestListFiles:
         (workspace / ".hidden").write_text("2")
 
         sfa = SecureFileAccess(str(workspace))
-        files = sfa.list_files(".")
+        files = sfa.list_workspace_files(".")
 
         assert "visible.txt" in files
         assert ".hidden" not in files
@@ -397,7 +452,7 @@ class TestListFiles:
         (workspace / ".hidden").write_text("2")
 
         sfa = SecureFileAccess(str(workspace))
-        files = sfa.list_files(".", include_hidden=True)
+        files = sfa.list_workspace_files(".", include_hidden=True)
 
         assert "visible.txt" in files
         assert ".hidden" in files
@@ -409,8 +464,8 @@ class TestListFiles:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation):
-            sfa.list_files("../..")
+        with pytest.raises(SecurityError):
+            sfa.list_workspace_files("../..")
 
     def test_list_files_empty_directory(self, tmp_path):
         """Should return empty list for empty directory."""
@@ -418,7 +473,7 @@ class TestListFiles:
         workspace.mkdir()
 
         sfa = SecureFileAccess(str(workspace))
-        files = sfa.list_files(".")
+        files = sfa.list_workspace_files(".")
 
         assert files == []
 
@@ -455,5 +510,5 @@ class TestFileExists:
 
         sfa = SecureFileAccess(str(workspace))
 
-        with pytest.raises(SecurityViolation):
+        with pytest.raises(SecurityError):
             sfa.file_exists(".env")
