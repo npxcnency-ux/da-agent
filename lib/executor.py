@@ -7,6 +7,7 @@ Runs generated Python code in isolated environment.
 """
 
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict
@@ -58,9 +59,9 @@ class Executor:
             code_file = Path(f.name)
 
         try:
-            # Execute in subprocess
+            # Execute in subprocess using same Python interpreter
             result = subprocess.run(
-                ['python', str(code_file)],
+                [sys.executable, str(code_file)],
                 cwd=self.workspace,
                 capture_output=True,
                 text=True,
