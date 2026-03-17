@@ -6,11 +6,8 @@
   "license": "MIT",
 
   "skills": [
-    "skills/analyze-request"
-  ],
-
-  "commands": [
-    "commands/analyze.md"
+    "skills/analyze-request",
+    "skills/execute-auto"
   ],
 
   "python_modules": [
