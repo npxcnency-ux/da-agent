@@ -5,40 +5,34 @@ Automatically adapts behavior based on task complexity: Auto, Collaborative, or 
 
 ## Installation & Quick Start
 
-### One-Command Install (Recommended)
+### Method 1: Python CLI (Works Anywhere)
+
+```bash
+cd ~/da-agent
+pip install -e .
+python cli.py analyze
+```
+
+This interactive CLI provides the full DA-Agent workflow without requiring Claude Code.
+
+### Method 2: Claude Code Integration
 
 ```bash
 cd ~/da-agent
 ./install-local.sh
 ```
 
-Then **restart Claude Code** and use: `/da:analyze`
+Then **restart Claude Code** and use the Skill tool to invoke `da:analyze-request` or `da:execute-auto`.
 
-### Manual Installation
+**Note:** Claude Code v2.1.77+ uses skills (invoked via the Skill tool), not slash commands. The `/da:analyze` command syntax is not supported.
 
-```bash
-# 1. Install Python package
-pip install -e .
-
-# 2. Create symlink for Claude Code
-ln -s ~/da-agent ~/.claude/plugins/cache/da-agent-local
-
-# 3. Register in ~/.claude/plugins/installed_plugins.json
-# (See install-local.sh for the JSON entry format)
-
-# 4. Restart Claude Code
-
-# 5. Use the plugin
-/da:analyze
-```
-
-### Test Without Claude Code
+### Test the Installation
 
 ```bash
 # Run the demo script
 python tests/demo_phase1.py
 
-# Or use Python directly
+# Or test Python modules directly
 python -c "
 from lib.security_wrapper import SecureFileAccess
 from lib.complexity_scorer import ComplexityScorer
@@ -69,9 +63,9 @@ print('✓ All modules working')
 - LLM + rule-based complexity scorer
 - analyze-request skill
 - execute-auto skill (simple aggregations)
-- /da:analyze command
+- Python CLI for interactive analysis
 - End-to-end execution for simple queries ✨
-- Comprehensive test coverage
+- Comprehensive test coverage (96 tests, 95% coverage)
 
 **Deliverable:** Can handle "show me top 10 users by revenue" end-to-end ✅
 
