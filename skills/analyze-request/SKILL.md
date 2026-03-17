@@ -84,15 +84,19 @@ Present the scoring result and ask for confirmation:
 ### Phase 4: Route to Execution
 
 Based on confirmed mode:
-- `auto` → (Phase 1: Not yet implemented, tell user "Coming soon")
-- `collab` → (Phase 1: Not yet implemented, tell user "Coming soon")
-- `assist` → (Phase 1: Not yet implemented, tell user "Coming soon")
+- `auto` → Load execute-auto skill and hand off
+- `collab` → (Phase 2: Coming soon)
+- `assist` → (Phase 2: Coming soon)
 
-**Phase 1 Note:** Execution skills are not yet built. After scoring, tell the user:
+For auto mode:
 
-"Phase 1 MVP: I've analyzed your request and determined it's a [mode] complexity task. The execution skills will be implemented in Phase 2. For now, I can help you understand what approach would be taken."
+```python
+# Hand off to execute-auto skill
+print("Routing to auto-execution mode...")
+# The execute-auto skill will take over from here
+```
 
-Then explain what the execution would look like based on the mode.
+Then follow the execute-auto skill workflow.
 
 ### Phase 5: Knowledge Base Recording
 
