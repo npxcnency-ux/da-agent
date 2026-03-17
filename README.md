@@ -3,17 +3,47 @@
 Intelligent data analysis assistant for data analysts working with local files.
 Automatically adapts behavior based on task complexity: Auto, Collaborative, or Advisory mode.
 
-## Quick Start
+## Installation & Quick Start
+
+### One-Command Install (Recommended)
 
 ```bash
-# Install
+cd ~/da-agent
+./install-local.sh
+```
+
+Then **restart Claude Code** and use: `/da:analyze`
+
+### Manual Installation
+
+```bash
+# 1. Install Python package
 pip install -e .
 
-# In Claude Code
-/plugin install da-agent@local:~/da-agent
+# 2. Create symlink for Claude Code
+ln -s ~/da-agent ~/.claude/plugins/cache/da-agent-local
 
-# Use
+# 3. Register in ~/.claude/plugins/installed_plugins.json
+# (See install-local.sh for the JSON entry format)
+
+# 4. Restart Claude Code
+
+# 5. Use the plugin
 /da:analyze
+```
+
+### Test Without Claude Code
+
+```bash
+# Run the demo script
+python tests/demo_phase1.py
+
+# Or use Python directly
+python -c "
+from lib.security_wrapper import SecureFileAccess
+from lib.complexity_scorer import ComplexityScorer
+print('✓ All modules working')
+"
 ```
 
 ## Features
