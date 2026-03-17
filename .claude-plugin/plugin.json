@@ -1,0 +1,21 @@
+{
+  "name": "da-agent",
+  "version": "0.1.0",
+  "description": "Data Analysis Agent with Layered Intelligent Routing",
+  "author": "DA-Agent Team",
+  "license": "MIT",
+
+  "skills": [
+    "skills/analyze-request"
+  ],
+
+  "commands": [
+    "commands/analyze.md"
+  ],
+
+  "python_modules": [
+    "lib"
+  ],
+
+  "requirements": "requirements.txt"
+}
